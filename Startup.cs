@@ -1,14 +1,18 @@
+using FluentValidation.AspNetCore;
+using MailDelivery.Data;
+using MailDelivery.Extenssions;
+using MailDelivery.Middleware;
+using MailDelivery.Models;
+using MailDelivery.Models.Interfaces;
+using MailDelivery.Services;
+using MailDelivery.Validators;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Quartz;
 
 namespace MailDelivery
 {
@@ -21,14 +25,29 @@ namespace MailDelivery
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOptions();
+            services.Configure<MailDeliveryConfiguration>(Configuration.GetSection(nameof(MailDeliveryConfiguration)));
+            services
+                .AddControllers()
+                .AddFluentValidation(options =>
+                {
+                    options.RegisterValidatorsFromAssemblyContaining<Startup>();
+                    options.DisableDataAnnotationsValidation = true;
+                });
 
-            services.AddControllers();
+            services.AddDbContext<AppDbContext>(options => options.UseSqlite(Configuration.GetConnectionString("SqliteConnection")));
+            services.AddTransient<IDbRepository, SqliteRepository>();
+            services.AddTransient<ILetterValidator, LetterValidator>();
+
+            services.AddQuartzSendLetters();
+            services.AddQuartzServer(options => options.WaitForJobsToComplete = true);
+
+            services.AddHttpClients();
+            services.AddMessageAdapters();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -36,9 +55,8 @@ namespace MailDelivery
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseMiddleware<ExceptionHandlerMiddleware>();
             app.UseRouting();
-
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

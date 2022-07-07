@@ -1,11 +1,10 @@
+using MailDelivery.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MailDelivery
 {
@@ -13,11 +12,45 @@ namespace MailDelivery
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            try
+            {
+                var environment = (string)Environment.GetEnvironmentVariables(
+                    EnvironmentVariableTarget.Machine)["ASPNETCORE_ENVIRONMENT"] ?? "Development";
+
+                var configuration = new ConfigurationBuilder()
+                    .AddJsonFile("appsettings.json")
+                    .AddJsonFile($"appsettings.{environment}.json")
+                    .AddUserSecrets<MailDeliveryConfiguration>()
+                    .Build();
+
+                var options = configuration
+                    .GetSection(nameof(MailDeliveryConfiguration))
+                    .Get<MailDeliveryConfiguration>();
+
+                Log.Logger = new LoggerConfiguration()
+                    .WriteTo.Seq(options.SeqHttpHost, apiKey: options.SeqApiKey)
+                    .CreateLogger();
+
+                Log.Information("Запуск сервиса.");
+                CreateHostBuilder(args).Build().Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Работа сервиса остановлена.");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging((context, builder) =>
+                {
+                    builder.AddConfiguration(context.Configuration.GetSection("Logging"));
+                    builder.AddSerilog();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
