@@ -12,7 +12,7 @@ namespace MailDelivery.Models.Interfaces
 
         Task<Template> FindTemplateAsync(MessageBuilderType type);
 
-        Task RegisterLettersAsync(List<Letter> letters);
+        Task RegisterLettersAsync(IEnumerable<Letter> letters);
 
         Task MarkDistributionAsync(int distributionId, StatusType status, string reason = null);
 

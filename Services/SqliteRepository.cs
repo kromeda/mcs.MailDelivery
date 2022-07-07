@@ -89,7 +89,7 @@ namespace MailDelivery.Services
             await context.SaveChangesAsync();
         }
 
-        public async Task RegisterLettersAsync(List<Letter> letters)
+        public async Task RegisterLettersAsync(IEnumerable<Letter> letters)
         {
             if (letters.Any())
             {

@@ -12,7 +12,7 @@
 
         public class HttpHosts
         {
-            public string Markup { get; set; }
+            public string MailMarkup { get; set; }
         }
 
         public class MailOptions

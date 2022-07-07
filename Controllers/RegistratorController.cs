@@ -65,11 +65,11 @@ namespace MailDelivery.Controllers
                 ToAddress = arg.ReceiverAddress,
                 Subject = arg.Subject,
                 Arguments = arg.Arguments
-            }).ToList();
+            });
 
             await repository.RegisterLettersAsync(letters);
             logger.LogInformation((int)LogType.LettersRegistered,
-                "Зарегистрировано {LettersCount} писем для доставки, по рассылке №{DistributionId}", letters.Count, distributionId);
+                "Зарегистрировано {LettersCount} писем для доставки, по рассылке №{DistributionId}", letters.Count(), distributionId);
 
             return Ok();
         }
