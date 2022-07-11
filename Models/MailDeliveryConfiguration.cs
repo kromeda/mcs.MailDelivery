@@ -24,6 +24,8 @@
             public string SenderLogin { get; set; }
 
             public string SenderPassword { get; set; }
+
+            public int SmtpPort { get; set; }
         }
     }
 }

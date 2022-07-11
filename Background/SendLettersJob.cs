@@ -24,7 +24,6 @@ namespace MailDelivery.Background
         private readonly MailDeliveryConfiguration.MailOptions options;
 
         private const int maxProcessCount = 4;
-        private const int port = 345;
 
         public SendLettersJob(ILogger<SendLettersJob> logger,
                               IOptions<MailDeliveryConfiguration> options,
@@ -86,7 +85,7 @@ namespace MailDelivery.Background
             using var scope = services.CreateScope();
             IDbRepository scopedRepository = scope.ServiceProvider.GetRequiredService<IDbRepository>();
 
-            using var client = new SmtpClient(options.ExchangeHost, port);
+            using var client = new SmtpClient(options.ExchangeHost, options.SmtpPort);
             client.Credentials = new NetworkCredential(options.SenderLogin, options.SenderPassword);
 
             foreach (var letter in chunk)

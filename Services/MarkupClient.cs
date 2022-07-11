@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace MailDelivery.Services
@@ -26,7 +26,7 @@ namespace MailDelivery.Services
 
         public async Task<string> RequestMarkupAsync(string route, string arguments)
         {
-            var response = await client.PostAsJsonAsync(route, arguments);
+            var response = await client.PostAsync(route, new StringContent(arguments, Encoding.UTF8, "application/json"));
             var content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
